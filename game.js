@@ -191,22 +191,31 @@ class MainGameScene extends Phaser.Scene {
     const directions = ['E', 'N', 'NE', 'NEE', 'NNE', 'NNW', 'NW', 'NWW', 'S', 'SE', 'SEE', 'SSE', 'SSW', 'SW', 'SWW', 'W'];
 
     // Load warrior idle animations for all directions
+    // Corrected direction-to-asset mapping for mirrored diagonals
+    const directionAssetMap = {
+      'WA': 'SA', // up-left uses down-left asset
+      'WD': 'SD', // up-right uses down-right asset
+      'SA': 'WA', // down-left uses up-left asset
+      'SD': 'WD', // down-right uses up-right asset
+      // All other directions use themselves
+    };
     directions.forEach(dir => {
-      // Swap S and W sprite loading
-    let spriteDir = dir;
-    if (dir === 'S') spriteDir = 'W';
+      let spriteDir = directionAssetMap[dir] || dir;
+      let angle = this.getAngleForDirection(spriteDir);
+      this.load.image(
+        `warrior_idle_${dir}`,
+        `assets/playable character/warrior/warrior_armed_idle/${spriteDir}/warrior_armed_idle_${spriteDir}_${angle}_0.png`
+      );
     });
 
     // Load warrior walk animations for all directions
     directions.forEach(dir => {
       for (let frame = 0; frame < 8; frame++) {
-        // Swap S and W sprite loading
-        let spriteDir = dir;
-        if (dir === 'S') spriteDir = 'W';
-        else if (dir === 'W') spriteDir = 'S';
+        let spriteDir = directionAssetMap[dir] || dir;
+        let angle = this.getAngleForDirection(spriteDir);
         this.load.image(
           `warrior_walk_${dir}_${frame}`,
-          `assets/playable character/warrior/warrior_armed_walk/${spriteDir}/warrior_armed_walk_${spriteDir}_${this.getAngleForDirection(dir)}_${frame}.png`
+          `assets/playable character/warrior/warrior_armed_walk/${spriteDir}/warrior_armed_walk_${spriteDir}_${angle}_${frame}.png`
         );
       }
     });
@@ -214,13 +223,11 @@ class MainGameScene extends Phaser.Scene {
     // Load skeleton walk animations for all directions
     directions.forEach(dir => {
       for (let frame = 0; frame < 8; frame++) {
-        // Swap S and W sprite loading
-        let spriteDir = dir;
-        if (dir === 'S') spriteDir = 'W';
-        else if (dir === 'W') spriteDir = 'S';
+        let spriteDir = directionAssetMap[dir] || dir;
+        let angle = this.getAngleForDirection(spriteDir);
         this.load.image(
           `skeleton_walk_${dir}_${frame}`,
-          `assets/enemy/skeleton/skeleton_default_walk/${spriteDir}/skeleton_default_walk_${spriteDir}_${this.getAngleForDirection(dir)}_${frame}.png`
+          `assets/enemy/skeleton/skeleton_default_walk/${spriteDir}/skeleton_default_walk_${spriteDir}_${angle}_${frame}.png`
         );
       }
     });
@@ -228,13 +235,11 @@ class MainGameScene extends Phaser.Scene {
     // Load skeleton death animations for all directions
     directions.forEach(dir => {
       for (let frame = 0; frame < 8; frame++) {
-        // Swap S and W sprite loading
-        let spriteDir = dir;
-        if (dir === 'S') spriteDir = 'W';
-        else if (dir === 'W') spriteDir = 'S';
+        let spriteDir = directionAssetMap[dir] || dir;
+        let angle = this.getAngleForDirection(spriteDir);
         this.load.image(
           `skeleton_death_${dir}_${frame}`,
-          `assets/enemy/skeleton/skeleton_special_death/${spriteDir}/skeleton_special_death_${spriteDir}_${this.getAngleForDirection(dir)}_${frame}.png`
+          `assets/enemy/skeleton/skeleton_special_death/${spriteDir}/skeleton_special_death_${spriteDir}_${angle}_${frame}.png`
         );
       }
     });
