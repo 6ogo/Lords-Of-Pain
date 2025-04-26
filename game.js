@@ -6,11 +6,6 @@ class TitleScene extends Phaser.Scene {
 
   preload() {
     this.load.image("groundStone", "assets/environment/ground_stone1.png");
-    // Load sound assets
-    this.load.audio('walk', 'assets/sounds/walk.wav');
-    this.load.audio('attack', 'assets/sounds/attack.wav');
-    this.load.audio('death', 'assets/sounds/death.wav');
-    this.load.audio('pickup', 'assets/sounds/pickup.wav');
     
     // UI assets
     this.load.image("highlight", "assets/user interface/highlight/highlight_yellow.png");
@@ -229,12 +224,6 @@ class MainGameScene extends Phaser.Scene {
     // Environment
     this.load.image('groundStone', 'assets/environment/ground_stone1.png');
     
-    // Sound effects
-    this.load.audio('walk', 'assets/sounds/walk.wav');
-    this.load.audio('attack', 'assets/sounds/attack.wav');
-    this.load.audio('death', 'assets/sounds/death.wav');
-    this.load.audio('pickup', 'assets/sounds/pickup.wav');
-    
     // UI
     this.load.image('highlight', 'assets/user interface/highlight/highlight_yellow.png');
     this.load.image('lootIndicator', 'assets/user interface/loot-indicator/loot_indicator_yellow.png');
@@ -243,8 +232,6 @@ class MainGameScene extends Phaser.Scene {
     for (let i = 0; i < 8; i++) {
       this.load.image(`glint${i}`, `assets/vfx/glint/glint_${i}.png`);
     }
-    
-    // Heart icons for UI (we'll create these with graphics)
   }
   
   // Helper function to get the angle string for a direction
@@ -271,11 +258,12 @@ class MainGameScene extends Phaser.Scene {
   }
 
   create(data) {
+    // Set up dummy sound objects with empty functions to avoid errors
     this.sounds = {
-      walk: this.sound.add('walk', { loop: false, volume: 0.3 }), 
-      attack: this.sound.add('attack', { loop: false, volume: 0.5 }),
-      death: this.sound.add('death', { loop: false, volume: 0.6 }),
-      pickup: this.sound.add('pickup', { loop: false, volume: 0.4 })
+      walk: { play: () => {}, isPlaying: false },
+      attack: { play: () => {} },
+      death: { play: () => {} },
+      pickup: { play: () => {} }
     };
     
     this.isMobile = this.sys.game.device.os.android || this.sys.game.device.os.iOS;
@@ -418,9 +406,6 @@ class MainGameScene extends Phaser.Scene {
       this.input.on("pointerdown", (ptr) => { 
         this.attackEnemy(ptr);
       });
-      
-      // Set custom cursor
-      this.input.setDefaultCursor(`url(assets/cursorGauntlet.png), pointer`);
     } 
   }
   
@@ -453,8 +438,11 @@ class MainGameScene extends Phaser.Scene {
     // Create heart containers at the top left
     this.hearts = [];
     for (let i = 0; i < this.player.maxHealth; i++) {
-      const heart = this.add.image(30 + i * 40, 30, 'heart_full').setScrollFactor(0).setDepth(100);
-      heart.setScale(2);
+      // Create hearts using graphics instead of images
+      const heart = this.add.graphics();
+      heart.fillStyle(0xff0000);
+      heart.fillCircle(30 + i * 40, 30, 15);
+      heart.setScrollFactor(0).setDepth(100);
       this.hearts.push(heart);
     }
     
@@ -474,7 +462,13 @@ class MainGameScene extends Phaser.Scene {
   updateUI() {
     // Update hearts based on current health
     for (let i = 0; i < this.hearts.length; i++) {
-      this.hearts[i].setTexture(i < this.player.health ? 'heart_full' : 'heart_empty');
+      this.hearts[i].clear();
+      if (i < this.player.health) {
+        this.hearts[i].fillStyle(0xff0000);
+      } else {
+        this.hearts[i].fillStyle(0x444444);
+      }
+      this.hearts[i].fillCircle(30 + i * 40, 30, 15);
     }
     
     // Update score and coins
@@ -517,47 +511,36 @@ class MainGameScene extends Phaser.Scene {
   }
   
   createWalls() {
+    // For an isometric game, we'll just create invisible walls at the edges
     // Top wall
-    for (let x = 0; x < this.sys.game.config.width; x += 32) {
-      this.walls.create(x, 0, 'rocks').setOrigin(0).refreshBody();
-    }
+    this.walls.create(400, 30, null).setSize(800, 60).setVisible(false).refreshBody();
     
     // Bottom wall
-    for (let x = 0; x < this.sys.game.config.width; x += 32) {
-      this.walls.create(x, this.sys.game.config.height - 32, 'rocks').setOrigin(0).refreshBody();
-    }
+    this.walls.create(400, 570, null).setSize(800, 60).setVisible(false).refreshBody();
     
     // Left wall
-    for (let y = 32; y < this.sys.game.config.height - 32; y += 32) {
-      this.walls.create(0, y, 'rocks').setOrigin(0).refreshBody();
-    }
+    this.walls.create(30, 300, null).setSize(60, 600).setVisible(false).refreshBody();
     
     // Right wall
-    for (let y = 32; y < this.sys.game.config.height - 32; y += 32) {
-      this.walls.create(this.sys.game.config.width - 32, y, 'rocks').setOrigin(0).refreshBody();
-    }
+    this.walls.create(770, 300, null).setSize(60, 600).setVisible(false).refreshBody();
   }
   
   addObstacles() {
-    const numRocks = Phaser.Math.Between(5, 10);
-    const numMushrooms = Phaser.Math.Between(3, 7);
+    // For simplicity, we'll just add invisible obstacles that create the feel of
+    // an isometric map without visible elements
+    const numObstacles = Phaser.Math.Between(5, 10);
     
-    // Add rocks
-    for (let i = 0; i < numRocks; i++) {
-      const x = Phaser.Math.Between(80, this.sys.game.config.width - 80);
-      const y = Phaser.Math.Between(80, this.sys.game.config.height - 80);
+    for (let i = 0; i < numObstacles; i++) {
+      const x = Phaser.Math.Between(100, this.sys.game.config.width - 100);
+      const y = Phaser.Math.Between(100, this.sys.game.config.height - 100);
       
       // Check if position is clear (not too close to player)
       if (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) > 100) {
-        this.obstacles.create(x, y, 'rocks').refreshBody();
+        const obstacle = this.obstacles.create(x, y, null);
+        obstacle.setSize(60, 60);
+        obstacle.setVisible(false);
+        obstacle.refreshBody();
       }
-    }
-    
-    // Add mushrooms (decorative, non-collidable)
-    for (let i = 0; i < numMushrooms; i++) {
-      const x = Phaser.Math.Between(50, this.sys.game.config.width - 50);
-      const y = Phaser.Math.Between(50, this.sys.game.config.height - 50);
-      this.add.image(x, y, 'mushrooms').setDepth(1);
     }
   }
   
@@ -596,7 +579,7 @@ class MainGameScene extends Phaser.Scene {
     });
     
     // Sound effect
-    this.sounds.death.play();
+   //  this.sounds.death.play();
     
     // Update UI
     this.updateUI();
@@ -663,11 +646,6 @@ class MainGameScene extends Phaser.Scene {
       this.player.play(`warrior_walk_${direction}`, true);
     }
     
-    // Play footstep sound if not already playing
-    if (!this.sounds.walk.isPlaying) {
-      this.sounds.walk.play();
-    }
-    
     // Update depth for isometric sorting
     this.player.depth = this.player.y;
   }
@@ -717,9 +695,6 @@ class MainGameScene extends Phaser.Scene {
       // Update player texture to face the right direction
       this.player.setTexture(`warrior_idle_${this.player.facing}`);
     }
-    
-    // Play attack sound
-    this.sounds.attack.play();
     
     // Visual feedback for attack (flash player)
     this.player.setTint(0xffff00);
@@ -810,9 +785,6 @@ class MainGameScene extends Phaser.Scene {
     // Make non-collidable
     enemy.body.enable = false;
     
-    // Play death sound
-    this.sounds.death.play();
-    
     // Add score
     this.score += enemy.score || 100;
     this.updateUI();
@@ -874,9 +846,6 @@ class MainGameScene extends Phaser.Scene {
     // Add coins
     this.coins += pickup.setValue || 1;
     this.updateUI();
-    
-    // Play sound
-    this.sounds.pickup.play();
   }
   
   handleRoomClear() {
