@@ -192,15 +192,21 @@ class MainGameScene extends Phaser.Scene {
 
     // Load warrior idle animations for all directions
     directions.forEach(dir => {
-      this.load.image(`warrior_idle_${dir}`, `assets/playable character/warrior/warrior_armed_idle/${dir}/warrior_armed_idle_${dir}_${this.getAngleForDirection(dir)}_0.png`);
+      // Swap S and W sprite loading
+    let spriteDir = dir;
+    if (dir === 'S') spriteDir = 'W';
     });
 
     // Load warrior walk animations for all directions
     directions.forEach(dir => {
       for (let frame = 0; frame < 8; frame++) {
+        // Swap S and W sprite loading
+        let spriteDir = dir;
+        if (dir === 'S') spriteDir = 'W';
+        else if (dir === 'W') spriteDir = 'S';
         this.load.image(
           `warrior_walk_${dir}_${frame}`,
-          `assets/playable character/warrior/warrior_armed_walk/${dir}/warrior_armed_walk_${dir}_${this.getAngleForDirection(dir)}_${frame}.png`
+          `assets/playable character/warrior/warrior_armed_walk/${spriteDir}/warrior_armed_walk_${spriteDir}_${this.getAngleForDirection(dir)}_${frame}.png`
         );
       }
     });
@@ -208,9 +214,13 @@ class MainGameScene extends Phaser.Scene {
     // Load skeleton walk animations for all directions
     directions.forEach(dir => {
       for (let frame = 0; frame < 8; frame++) {
+        // Swap S and W sprite loading
+        let spriteDir = dir;
+        if (dir === 'S') spriteDir = 'W';
+        else if (dir === 'W') spriteDir = 'S';
         this.load.image(
           `skeleton_walk_${dir}_${frame}`,
-          `assets/enemy/skeleton/skeleton_default_walk/${dir}/skeleton_default_walk_${dir}_${this.getAngleForDirection(dir)}_${frame}.png`
+          `assets/enemy/skeleton/skeleton_default_walk/${spriteDir}/skeleton_default_walk_${spriteDir}_${this.getAngleForDirection(dir)}_${frame}.png`
         );
       }
     });
@@ -218,9 +228,13 @@ class MainGameScene extends Phaser.Scene {
     // Load skeleton death animations for all directions
     directions.forEach(dir => {
       for (let frame = 0; frame < 8; frame++) {
+        // Swap S and W sprite loading
+        let spriteDir = dir;
+        if (dir === 'S') spriteDir = 'W';
+        else if (dir === 'W') spriteDir = 'S';
         this.load.image(
           `skeleton_death_${dir}_${frame}`,
-          `assets/enemy/skeleton/skeleton_special_death/${dir}/skeleton_special_death_${dir}_${this.getAngleForDirection(dir)}_${frame}.png`
+          `assets/enemy/skeleton/skeleton_special_death/${spriteDir}/skeleton_special_death_${spriteDir}_${this.getAngleForDirection(dir)}_${frame}.png`
         );
       }
     });
@@ -306,7 +320,10 @@ class MainGameScene extends Phaser.Scene {
 
     // Create warrior walk animations for all directions
     directions.forEach(dir => {
-      // Create warrior walk animation for this direction
+      // Swap S and W animation frames
+      let animDir = dir;
+      if (dir === 'S') animDir = 'W';
+      else if (dir === 'W') animDir = 'S';
       this.anims.create({
         key: `warrior_walk_${dir}`,
         frames: [
@@ -377,6 +394,7 @@ class MainGameScene extends Phaser.Scene {
       repeat: 0
     });
   }
+
   setupCamera() {
     // Make camera follow the player
     this.cameras.main.setBounds(0, 0, this.roomWidth, this.roomHeight);
@@ -385,6 +403,7 @@ class MainGameScene extends Phaser.Scene {
     // Set a zoom level that allows seeing more of the environment
     this.cameras.main.setZoom(1.0);
   }
+
   setupPhysicsGroups() {
     this.walls = this.physics.add.staticGroup();
     this.obstacles = this.physics.add.staticGroup();
@@ -397,6 +416,7 @@ class MainGameScene extends Phaser.Scene {
     const startX = this.roomWidth / 2;
     const startY = this.roomHeight / 2;
 
+    // Swap S and W default facing
     this.player = this.physics.add.sprite(startX, startY, "warrior_idle_S").setDepth(10);
     this.player.setCollideWorldBounds(true);
     this.player.health = 3;
@@ -406,6 +426,7 @@ class MainGameScene extends Phaser.Scene {
     this.player.attackCooldown = 500; // ms
     this.player.attackRange = 80;
     this.player.isAttacking = false;
+    // Swap S and W default facing
     this.player.facing = 'S'; // Default facing south
 
     // Adjust hitbox size (smaller than visual size for better isometric feel)
@@ -689,32 +710,33 @@ class MainGameScene extends Phaser.Scene {
     const numObstacles = Phaser.Math.Between(12, 20);
 
     for (let i = 0; i < numObstacles; i++) {
-      const x = Phaser.Math.Between(100, this.roomWidth - 100);
-      const y = Phaser.Math.Between(100, this.roomHeight - 100);
+      // Choose random positions throughout the large room, away from the player
+      let x, y;
+      do {
+        x = Phaser.Math.Between(100, this.roomWidth - 100);
+        y = Phaser.Math.Between(100, this.roomHeight - 100);
+      } while (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < 150);
 
-      // Check if position is clear (not too close to player)
-      if (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) > 150) {
-        // Create physics body for collision
-        const obstacle = this.obstacles.create(x, y, null);
-        obstacle.setSize(50, 50);
-        obstacle.setImmovable(true);
-        obstacle.refreshBody();
+      // Create physics body for collision
+      const obstacle = this.obstacles.create(x, y, null);
+      obstacle.setSize(50, 50);
+      obstacle.setImmovable(true);
+      obstacle.refreshBody();
 
-        // Create visible obstacle with multiple sprites for a pillar/rock appearance
-        const size = Phaser.Math.Between(2, 3);
-        const color = Phaser.Math.Between(0, 1) === 0 ? 0x8888ff : 0x88ff88; // Blue or green obstacles
+      // Create visible obstacle with multiple sprites for a pillar/rock appearance
+      const size = Phaser.Math.Between(2, 3);
+      const color = Phaser.Math.Between(0, 1) === 0 ? 0x8888ff : 0x88ff88; // Blue or green obstacles
 
-        // Create a stack of sprites to make a pillar/rock
-        for (let j = 0; j < size; j++) {
-          const obstacleSprite = this.add.sprite(
-            x + Phaser.Math.Between(-5, 5),
-            y + Phaser.Math.Between(-5, 5),
-            'goldDrop'
-          );
-          obstacleSprite.setScale(2.5);
-          obstacleSprite.setTint(color);
-          obstacleSprite.depth = y + j; // Stack the sprites with increasing depth
-        }
+      // Create a stack of sprites to make a pillar/rock
+      for (let j = 0; j < size; j++) {
+        const obstacleSprite = this.add.sprite(
+          x + Phaser.Math.Between(-5, 5),
+          y + Phaser.Math.Between(-5, 5),
+          'goldDrop'
+        );
+        obstacleSprite.setScale(2.5);
+        obstacleSprite.setTint(color);
+        obstacleSprite.depth = y + j; // Stack the sprites with increasing depth
       }
     }
   }
@@ -791,6 +813,7 @@ class MainGameScene extends Phaser.Scene {
       enemy.body.setOffset(enemy.width * 0.35, enemy.height * 0.7);
 
       enemy.score = 100;
+      // Swap S and W default facing
       enemy.facing = 'S'; // Default facing south
 
       // Start walking animation
